@@ -30,6 +30,7 @@ class Notification {
             cout << " ID: " << notification_id << " | Status: " << (is_read ? "Read" : "Unread") << endl;
             cout << "------------------------" << endl;
         }
+
         void markAsRead() { is_read = true; }
         string getId() const { return notification_id;}
         NotificationType getType() const { return type; }
@@ -756,49 +757,52 @@ public:
         cout << "Food '" << food->getName() << "' added successfully.\n";
     }
 
-    // === Create a combo ===
-    void createCombo(Combo(string name, double discount)) {}
+    // === Create a new combo ===
+    Combo* createCombo(string comboName, double discount) {
+        if (!combowehave) {
+            cout << "ComboManager not set.\n";
+            return nullptr;
+        }
+        
+        Combo* newCombo = new Combo(comboName, discount, notifMgr);
+        return newCombo;
+    }
 
-    // === Add New Food Combo ===
-    void addFoodToCombo() {}
-
-    // === Create New Combo ===
-    void addComboToMenu() {
-        if (!combowehave || !foodwehave) {
-            cout << "Managers not set.\n";
+    // === Add food to an existing combo ===
+    void addFoodToCombo(Combo* combo, string foodId) {
+        if (!combo) {
+            cout << "Invalid combo pointer.\n";
             return;
         }
-
-        cout << "\n--- Create New Combo ---\n";
-        string comboName;
-        double discount;
-
-        cout << "Enter combo name: ";
-        cin.ignore();
-        getline(cin, comboName);
-        cout << "Enter discount percentage (e.g., 10 for 10%): ";
-        cin >> discount;
-
-        Combo* newCombo = new Combo(comboName, discount, notifMgr);
-
-        // Add foods into combo
-        while (true) {
-            string foodId;
-            cout << "Enter Food ID to add to combo (or '0' to finish): ";
-            cin >> foodId;
-            if (foodId == "0") break;
-
-            Food* food = foodwehave->findFoodById(foodId);
-            if (food) {
-                newCombo->addFood(food);
-                cout << "Added: " << food->getName() << "\n";
-            } else {
-                cout << "Invalid Food ID.\n";
-            }
+        
+        if (!foodwehave) {
+            cout << "FoodManager not set.\n";
+            return;
         }
+        
+        Food* food = foodwehave->findFoodById(foodId);
+        if (food) {
+            combo->addFood(food);
+            cout << "Added '" << food->getName() << "' to combo.\n";
+        } else {
+            cout << "Food with ID '" << foodId << "' not found.\n";
+        }
+    }
 
-        combowehave->addCombo(newCombo);
-        cout << "Combo '" << comboName << "' created successfully.\n";
+    // === Add combo to menu ===
+    void addComboToMenu(Combo* combo) {
+        if (!combowehave) {
+            cout << "ComboManager not set.\n";
+            return;
+        }
+        
+        if (!combo) {
+            cout << "Invalid combo pointer.\n";
+            return;
+        }
+        
+        combowehave->addCombo(combo);
+        cout << "Combo '" << combo->getComboName() << "' added to menu successfully.\n";
     }
 
     // === Remove Food ===
@@ -811,19 +815,12 @@ public:
     }
 
     // === Remove Combo ===
-    void removeCombo() {
+    void removeCombo(string comboId) {
         if (!combowehave) {
             cout << "ComboManager not set.\n";
             return;
         }
-
-        string comboId;
-        cout << "\n--- Remove Combo ---\n";
-        cout << "Enter Combo ID: ";
-        cin >> comboId;
-
         combowehave->removeCombo(comboId);
-        cout << "Combo with ID " << comboId << " removed (if existed).\n";
     }
 
     // === Display Staff Info ===
@@ -1036,7 +1033,20 @@ int main() {
 
         cout << "===== 4. View all combos =====";
         staff->displayAllCombos();
-        
+
+        cout << "===== 5. Create new combo =====" << endl;
+        Combo* dinnerCombo = staff->createCombo("Dinner Special", 0.20);
+        staff->addFoodToCombo(dinnerCombo, "F002");
+        staff->addFoodToCombo(dinnerCombo, "F004");
+        staff->addFoodToCombo(dinnerCombo, "F005");
+        staff->addComboToMenu(dinnerCombo);
+
+        cout << "===== 6. Remove combo =====" << endl;
+        cout << "--Remove exist combo--" << endl;
+        staff->removeCombo("C002");
+        cout << "--Remove no exist combo--" << endl;
+        staff->removeCombo("C003");
+        cout << endl;
     }
     
     // Guest login
